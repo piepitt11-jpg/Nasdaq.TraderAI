@@ -1,0 +1,41 @@
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+
+st.set_page_config(page_title="Nasdaq TraderAI", layout="wide")
+
+st.title("📊 Nasdaq TraderAI")
+st.write("Scan multiple NASDAQ tickers, view price action, and get basic trend insights.")
+
+tickers = st.text_input(
+    "Enter tickers separated by commas (example: AAPL, MSFT, TSLA):",
+    "AAPL, MSFT, TSLA"
+)
+
+if st.button("Run Scan"):
+    ticker_list = [t.strip().upper() for t in tickers.split(",")]
+
+    for t in ticker_list:
+        st.subheader(f"📈 {t}")
+
+        try:
+            data = yf.download(t, period="5d", interval="5m")
+
+            if data.empty:
+                st.warning(f"No data found for {t}")
+                continue
+
+            st.line_chart(data["Close"])
+
+            last = data["Close"].iloc[-1]
+            prev = data["Close"].iloc[-20] if len(data) >= 20 else data["Close"].iloc[0]
+
+            if last > prev:
+                st.success(f"**Trend:** UP — Price rising")
+            elif last < prev:
+                st.error(f"**Trend:** DOWN — Price falling")
+            else:
+                st.info(f"**Trend:** SIDEWAYS — Little movement")
+
+        except Exception as e:
+            st.error(f"Error with {t}: {e}")
